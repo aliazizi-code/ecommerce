@@ -1,17 +1,23 @@
+import uuid
+
 from django.db import models
 from django.core.validators import MaxLengthValidator, MaxValueValidator, MinValueValidator
-from accounts.models import User
+from django.core.exceptions import ValidationError
 from taggit.managers import TaggableManager
 from mptt.models import MPTTModel, TreeForeignKey
 from autoslug import AutoSlugField
 from colorfield.fields import ColorField
-import uuid
-from utils.validators import validate_image_dimensions, validate_image_size
 from imagekit.models import ImageSpecField
 from imagekit.processors import ResizeToFill
-from django.core.exceptions import ValidationError
 
+from accounts.models import User
+from utils.validators import validate_image_dimensions, validate_image_size
 
+# Utility function for file upload path
+def get_upload_to(instance, filename):
+    return f'products/{instance}/{filename}'
+
+# Category for Products
 class CategoryProduct(MPTTModel):
     name = models.CharField(max_length=100, unique=True)
     slug = AutoSlugField(populate_from='name', unique=True)
@@ -24,63 +30,51 @@ class CategoryProduct(MPTTModel):
     def __str__(self):
         return self.name
 
-
+# Color options for Products
 class ColorProduct(models.Model):
     name = models.CharField(max_length=100, unique=True)
     color_code = ColorField()
 
     def __str__(self):
         return self.name
-    
+
     class Meta:
         verbose_name = 'Color Product'
         verbose_name_plural = 'Colors Products'
 
-
+# Size options for Products
 class SizeProduct(models.Model):
     size = models.CharField(max_length=100, unique=True)
 
     def __str__(self):
         return self.size
-    
+
     class Meta:
         verbose_name = 'Size Product'
         verbose_name_plural = 'Sizes Products'
 
-
-def get_upload_to(instance, filename):
-        return f'products/{instance}/{filename}'
-
-
+# Product images with thumbnail
 class ImagesProduct(models.Model):
     product = models.ForeignKey('Product', on_delete=models.CASCADE, related_name='images')
     image = models.ImageField(upload_to=get_upload_to, validators=[validate_image_size, validate_image_dimensions])
-    image_thumbnail = ImageSpecField(source='image',
-                                      processors=[ResizeToFill(120, 120)],
-                                      format='JPEG',
-                                      options={'quality': 80})
+    image_thumbnail = ImageSpecField(source='image', processors=[ResizeToFill(120, 120)], format='JPEG', options={'quality': 80})
 
     def __str__(self):
         return f'image: {self.product}'
-    
+
     class Meta:
         verbose_name = 'Image Product'
         verbose_name_plural = 'Images Products'
 
-
+# Defining the main Product model
 class Product(models.Model):
     name = models.CharField(max_length=200)
     slug = AutoSlugField(populate_from='name', unique=True, editable=False)
     tags = TaggableManager()
     sku = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
-    
     image = models.ImageField(upload_to=get_upload_to, validators=[validate_image_size, validate_image_dimensions])
-    image_thumbnail = ImageSpecField(source='image',
-                                      processors=[ResizeToFill(120, 120)],
-                                      format='JPEG',
-                                      options={'quality': 80})
-    
+    image_thumbnail = ImageSpecField(source='image', processors=[ResizeToFill(120, 120)], format='JPEG', options={'quality': 80})
     short_desc = models.CharField(max_length=255)
     description = models.TextField()
     favorites_count = models.PositiveIntegerField(default=0, editable=False)
@@ -89,21 +83,19 @@ class Product(models.Model):
     category = models.ForeignKey(CategoryProduct, on_delete=models.CASCADE, related_name='products')
     color = models.ManyToManyField(ColorProduct, related_name='products')
     size = models.ManyToManyField(SizeProduct, related_name='products')
-    
     is_published = models.BooleanField(default=True)
     is_delete = models.BooleanField(default=False)
-    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.name
-    
+
     class Meta:
         verbose_name = 'Product'
         verbose_name_plural = 'Products'
 
-
+# User favorites for Products
 class FavoriteProduct(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='favorites')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorites')
@@ -111,13 +103,13 @@ class FavoriteProduct(models.Model):
 
     def __str__(self):
         return f'like: {self.user} - {self.product}'
-    
+
     class Meta:
-        unique_together = ['product', 'user']
+        unique_together = ['product', 'user']  # Ensure a user can favorite a product only once
         verbose_name = 'Favorite Product'
         verbose_name_plural = 'Favorite Products'
 
-
+# Specifications for Products
 class SpecificationsProduct(models.Model):
     title = models.CharField(max_length=100)
     desc = models.TextField(validators=[MaxLengthValidator(300)])
@@ -125,12 +117,12 @@ class SpecificationsProduct(models.Model):
 
     def __str__(self):
         return self.title
-    
+
     class Meta:
         verbose_name = 'Specification Product'
         verbose_name_plural = 'Specifications Products'
 
-
+# Comments on Products
 class CommentProduct(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='comments')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments')
@@ -140,27 +132,28 @@ class CommentProduct(models.Model):
     is_published = models.BooleanField(default=False)
     likes_count = models.PositiveIntegerField(default=0, editable=False)
     dislikes_count = models.PositiveIntegerField(default=0, editable=False)
-    parent_comment = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies') 
+    parent_comment = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
 
     def __str__(self):
         return f'comment by {self.user} on {self.product}'
-    
+
     def clean(self):
         if self.parent_comment:
             if self.product != self.parent_comment.product:
                 raise ValidationError("Product must be the same as the parent comment.")
-
-            if self.parent_comment.parent_comment:
+            if self.parent_comment.parent_comment:  # Check if it's a reply to a reply
                 raise ValidationError("Cannot reply to a reply.")
+        if not self.comment.strip():  # Ensure comment is not empty
+            raise ValidationError("Comment cannot be empty.")
 
     def save(self, *args, **kwargs):
         self.clean()
         super().save(*args, **kwargs)
-    
+
     class Meta:
         verbose_name = 'Comment Product'
-        verbose_name_plural = 'Comment Products'
-
+        verbose_name_plural = 'Comments Products'
+        ordering = ['created_at']  # Optionally, order comments by creation date
 
 class VoteComment(models.Model):
     class VoteType(models.TextChoices):
@@ -169,9 +162,17 @@ class VoteComment(models.Model):
 
     comment = models.ForeignKey(CommentProduct, on_delete=models.CASCADE, related_name='votes')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='votes')
-    vote_type = models.CharField(max_length=7, choices=VoteType)
+    vote_type = models.CharField(max_length=7, choices=VoteType.choices)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'{self.vote_type}: {self.comment}'
+
+    class Meta:
+        unique_together = ['comment', 'user']  # Ensure a user can vote on a comment only once
+        verbose_name = 'Vote Comment'
+        verbose_name_plural = 'Votes Comments'
 
     @classmethod
     def toggle_vote(cls, comment_id, user, vote_type):
@@ -219,11 +220,3 @@ class VoteComment(models.Model):
                 existing_vote.save()
                 comment.save()
                 return "VOTE_CHANGED"
-
-    def __str__(self):
-        return f'{self.vote_type}: {self.comment}'
-    
-    class Meta:
-        unique_together = ['comment', 'user']
-        verbose_name = 'Like and DisLike Comment'
-        verbose_name_plural = 'Like and DisLike Comments'
