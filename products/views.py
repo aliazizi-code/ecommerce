@@ -8,6 +8,7 @@ from django.shortcuts import get_list_or_404
 from django_ratelimit.decorators import ratelimit
 from django.utils.decorators import method_decorator
 from .filters import ProductFilter
+from django_filters.rest_framework import DjangoFilterBackend
 from products.models import (
     Product,
     CategoryProduct,
@@ -15,8 +16,7 @@ from products.models import (
     VoteComment,
     ColorProduct,
     SizeProduct,
-    )
-from django_filters.rest_framework import DjangoFilterBackend
+)
 from products.serializers import (
     ProductsListSerializer,
     ProductDetailSerializer,
