@@ -4,11 +4,18 @@ from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-from products.models import Product, CategoryProduct, FavoriteProduct, VoteComment, ColorProduct, SizeProduct
 from django.shortcuts import get_list_or_404
 from django_ratelimit.decorators import ratelimit
 from django.utils.decorators import method_decorator
 from .filters import ProductFilter
+from products.models import (
+    Product,
+    CategoryProduct,
+    FavoriteProduct,
+    VoteComment,
+    ColorProduct,
+    SizeProduct,
+    )
 from django_filters.rest_framework import DjangoFilterBackend
 from products.serializers import (
     ProductsListSerializer,
@@ -29,13 +36,13 @@ class ProductsListViewSet(viewsets.ModelViewSet):
     filterset_class = ProductFilter
 
 
-class ProductDetailView(APIView):
+class ProductDetailView(generics.ListAPIView):
     serializer_class = ProductDetailSerializer
 
-    def get(self, request, slug):
-        product = get_list_or_404(Product, slug=slug, is_published=True, is_deleted=False)
-        serializer = self.serializer_class(product, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get_queryset(self):
+        slug = self.kwargs['slug']
+        return get_list_or_404(Product, slug=slug, is_published=True, is_deleted=False)
+
 
 
 class CategoriesListView(generics.ListAPIView):
