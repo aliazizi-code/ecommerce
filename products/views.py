@@ -38,14 +38,9 @@ class ProductDetailView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class CategoriesListView(APIView):
+class CategoriesListView(generics.ListAPIView):
     serializer_class = CategorySerializer
-
-    def get(self, request):
-        category = CategoryProduct.objects.filter(parent=None, is_active=True)
-        serializer = self.serializer_class(category, many=True)
-
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    queryset = CategoryProduct.objects.filter(parent=None, is_active=True)
 
 
 @method_decorator(ratelimit(key='user', rate='5/s', method='POST', block=True), name='dispatch')
