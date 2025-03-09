@@ -9,6 +9,7 @@ class ProductFilter(filters.FilterSet):
     price = filters.RangeFilter()
     category = filters.CharFilter(method='filter_by_category')
     color = filters.CharFilter(field_name='color__name', lookup_expr='iexact')
+    size = filters.CharFilter(field_name='size__size', lookup_expr='iexact')
 
 
     def filter_by_category(self, queryset, name, value):
@@ -21,4 +22,4 @@ class ProductFilter(filters.FilterSet):
 
     class Meta:
         model = Product
-        fields = ['order_by', 'price', 'category', 'color']
+        fields = ['order_by', 'price', 'category', 'color', 'size']
