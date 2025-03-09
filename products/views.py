@@ -94,16 +94,14 @@ class VoteCommentView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ProductCommentsView(APIView):
+class ProductCommentsView(generics.ListAPIView):
     serializer_class = CommentsAndRepliesSerializer
 
-    def get(self, request, slug):
+    def get_queryset(self):
+        slug = self.kwargs['slug']
         product = get_list_or_404(Product, slug=slug, is_published=True, is_deleted=False)
+        return product[0].comments.filter(is_approved=True, parent_comment__isnull=True).order_by('-created_at')
 
-        comments = product[0].comments.filter(is_approved=True, parent_comment__isnull=True).order_by('-created_at')
-
-        serializer = self.serializer_class(comments, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class ColorListView(generics.ListAPIView):
