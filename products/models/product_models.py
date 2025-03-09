@@ -2,6 +2,8 @@ import uuid
 
 from django.db import models
 from django.core.validators import MaxLengthValidator
+from django.contrib.postgres.search import SearchVectorField
+from django.contrib.postgres.indexes import GinIndex
 from taggit.managers import TaggableManager
 from mptt.models import MPTTModel, TreeForeignKey
 from autoslug import AutoSlugField
@@ -58,6 +60,7 @@ class Product(models.Model):
     slug = AutoSlugField(populate_from='name', unique=True, editable=False)
     tags = TaggableManager()
     sku = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    sv = SearchVectorField(null=True, editable=False)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     image = models.ImageField(upload_to=get_upload_to, validators=[validate_image_size, validate_image_dimensions])
     image_thumbnail = ImageSpecField(source='image', processors=[ResizeToFill(120, 120)], format='JPEG', options={'quality': 80})
@@ -78,6 +81,9 @@ class Product(models.Model):
         return self.name
 
     class Meta:
+        indexes = [
+            GinIndex(fields=['sv']),
+        ]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
         verbose_name = 'Product'
         verbose_name_plural = 'Products'
 
