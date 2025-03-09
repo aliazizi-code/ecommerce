@@ -3,7 +3,7 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-from products.models import Product, CategoryProduct, FavoriteProduct, VoteComment
+from products.models import Product, CategoryProduct, FavoriteProduct, VoteComment, ColorProduct, SizeProduct
 from django.shortcuts import get_list_or_404
 from django_ratelimit.decorators import ratelimit
 from django.utils.decorators import method_decorator
@@ -15,7 +15,8 @@ from products.serializers import (
     CategorySerializer,
     FavoriteProductSerializer,
     VoteCommentSerializer,
-    CommentsAndRepliesSerializer
+    CommentsAndRepliesSerializer,
+    ColorProductSerializer,
 )
 
 
@@ -100,4 +101,12 @@ class ProductCommentsView(APIView):
         comments = product[0].comments.filter(is_approved=True, parent_comment__isnull=True).order_by('-created_at')
 
         serializer = self.serializer_class(comments, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class ColorListViewSet(viewsets.ViewSet):
+    
+    def list(self, request):
+        colors = ColorProduct.objects.all()
+        serializer = ColorProductSerializer(colors, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
