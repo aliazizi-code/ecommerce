@@ -3,6 +3,7 @@ from .models import (
     Product,
     CategoryProduct,
     ColorProduct,
+    SizeProduct,
     ImagesProduct,
     SpecificationsProduct,
     CommentProduct,
@@ -28,6 +29,11 @@ class ColorProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = ColorProduct
         fields = ('id', 'name', 'color_code')
+
+class SizeProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SizeProduct
+        fields = ('id', 'size')
 
 class SpecificationsProductSerializer(serializers.ModelSerializer):
     class Meta:
@@ -72,7 +78,7 @@ class ProductsListSerializer(serializers.ModelSerializer):
 class ProductDetailSerializer(serializers.ModelSerializer):
     category = CategoryProductSerializer()
     color = ColorProductSerializer(many=True)
-    size = serializers.StringRelatedField(many=True)
+    size = SizeProductSerializer(many=True)
     images = ImagesProductSerializer(many=True)
     specifications = SpecificationsProductSerializer(many=True)
     comments = serializers.SerializerMethodField()
