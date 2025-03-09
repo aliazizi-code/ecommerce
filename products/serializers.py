@@ -55,7 +55,7 @@ class CommentsAndRepliesSerializer(CommentsSerializer):
     def get_replies(self, obj):
         replies = (obj.replies
                    .prefetch_related('user', 'user__userprofile')
-                   .filter(is_published=True)
+                   .filter(is_approved=True)
                    .order_by('-created_at'))
         return CommentsSerializer(replies, many=True).data
 
@@ -87,7 +87,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         )
 
     def get_comments(self, obj):
-        comments = obj.comments.filter(is_published=True).order_by('-likes_count')[:3]
+        comments = obj.comments.filter(is_approved=True).order_by('-likes_count')[:3]
         return CommentsSerializer(comments, many=True).data
 
 
