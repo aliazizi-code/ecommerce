@@ -20,7 +20,7 @@ from products.serializers import (
 
 
 class ProductsListViewSet(viewsets.ModelViewSet):
-    queryset = Product.objects.filter(is_published=True, is_delete=False)
+    queryset = Product.objects.filter(is_published=True, is_deleted=False)
     serializer_class = ProductsListSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_class = ProductFilter
@@ -30,7 +30,7 @@ class ProductDetailView(APIView):
     serializer_class = ProductDetailSerializer
 
     def get(self, request, slug):
-        product = get_list_or_404(Product, slug=slug, is_published=True, is_delete=False)
+        product = get_list_or_404(Product, slug=slug, is_published=True, is_deleted=False)
         serializer = self.serializer_class(product, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -55,7 +55,7 @@ class FavoriteProductView(APIView):
 
         if serializer.is_valid():
             data = serializer.validated_data
-            product = get_list_or_404(Product, slug=data['product_slug'], is_published=True, is_delete=False)
+            product = get_list_or_404(Product, slug=data['product_slug'], is_published=True, is_deleted=False)
 
             like, created = FavoriteProduct.objects.get_or_create(user=request.user, product_id=product[0].id)  
 
@@ -95,9 +95,9 @@ class ProductCommentsView(APIView):
     serializer_class = CommentsAndRepliesSerializer
 
     def get(self, request, slug):
-        product = get_list_or_404(Product, slug=slug, is_published=True)
+        product = get_list_or_404(Product, slug=slug, is_published=True, is_deleted=False)
 
-        comments = product[0].comments.filter(is_published=True, parent_comment__isnull=True).order_by('-created_at')
+        comments = product[0].comments.filter(is_approved=True, parent_comment__isnull=True).order_by('-created_at')
 
         serializer = self.serializer_class(comments, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
