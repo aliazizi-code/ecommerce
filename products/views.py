@@ -1,5 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework import viewsets
+from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -17,6 +18,7 @@ from products.serializers import (
     VoteCommentSerializer,
     CommentsAndRepliesSerializer,
     ColorProductSerializer,
+    SizeProductSerializer,
 )
 
 
@@ -104,9 +106,12 @@ class ProductCommentsView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class ColorListViewSet(viewsets.ViewSet):
+class ColorListView(generics.ListAPIView):
+    queryset = ColorProduct.objects.all()
+    serializer_class = ColorProductSerializer
     
-    def list(self, request):
-        colors = ColorProduct.objects.all()
-        serializer = ColorProductSerializer(colors, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class SizeListView(generics.ListAPIView):
+    queryset = SizeProduct.objects.all()
+    serializer_class = SizeProductSerializer
+
