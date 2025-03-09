@@ -42,6 +42,8 @@ class PublishedFilter(admin.SimpleListFilter):
 class ProductAdmin(admin.ModelAdmin):
     list_display = ['id', 'name', 'price', 'created_at', 'is_deleted', 'is_published']  # Ensure these fields exist
     search_fields = ['name', 'description']
+    list_editable = ['is_deleted', 'is_published']
+    list_per_page = 10
     list_filter = ['created_at', DeletedFilter, PublishedFilter, 'size', 'color']  # Add custom filters
     ordering = ['-created_at']
 
@@ -49,30 +51,35 @@ class ProductAdmin(admin.ModelAdmin):
 class FavoriteProductAdmin(admin.ModelAdmin):
     list_display = ['user', 'product', 'created_at']
     list_filter = ['user', 'product']
+    list_per_page = 20
     ordering = ['-created_at']
 
 # Color Product Admin
 class ColorProductAdmin(admin.ModelAdmin):
     list_display = ['id', 'name']  # Ensure 'name' exists
     search_fields = ['name']
+    list_per_page = 20
     ordering = ['name']
 
 # Size Product Admin
 class SizeProductAdmin(admin.ModelAdmin):
     list_display = ['id', 'size']  # Ensure 'size' exists
     search_fields = ['size']
+    list_per_page = 20
     ordering = ['id']
 
 # Images Product Admin
 class ImagesProductAdmin(admin.ModelAdmin):
     list_display = ['product', 'image', 'uploaded_at']  # Ensure these fields exist
     list_filter = ['product']
+    list_per_page = 10
     ordering = ['-uploaded_at']
 
 # Specifications Product Admin
 class SpecificationsProductAdmin(admin.ModelAdmin):
     list_display = ['product', 'title', 'desc']  # Ensure these fields exist
     list_filter = ['product']
+    list_per_page = 10
     ordering = ['product']
 
 # Comment Product Admin
@@ -80,18 +87,21 @@ class CommentProductAdmin(admin.ModelAdmin):
     list_display = ['product', 'user', 'created_at', 'is_approved']  # Ensure these fields exist
     list_filter = ['product', 'user', 'is_approved']
     search_fields = ['comment']
+    list_per_page = 10
     ordering = ['-created_at']
 
 # Vote Comment Admin
 class VoteCommentAdmin(admin.ModelAdmin):
     list_display = ['comment', 'user', 'vote_type', 'created_at']
     list_filter = ['vote_type']
+    list_per_page = 10
     ordering = ['-created_at']
 
 # Category Product Admin
 class CategoryProductAdmin(DraggableMPTTAdmin):
     list_display = ['tree_actions', 'indented_title']
     list_filter = ['is_active']
+    list_per_page = 10
     list_display_links = ['indented_title']
     search_fields = ['name']
     ordering = ['name']
