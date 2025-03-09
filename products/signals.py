@@ -1,5 +1,6 @@
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
+from django.contrib.postgres.search import SearchVector
 from .models import FavoriteProduct, CommentProduct, Product
 from django.db.models import Avg
 
@@ -35,4 +36,8 @@ def decrement_comment_count(sender, instance, **kwargs):
     instance.product.save()
 
 
-
+# Product Logic
+@receiver(post_save, sender=Product)
+def update_search_vector(sender, instance, **kwargs):
+    instance.sv = SearchVector('name', 'tags', 'category__name', 'color__name', 'size__size')
+    instance.save()
