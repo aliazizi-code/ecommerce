@@ -9,5 +9,6 @@ urlpatterns = [
     path('like/', views.FavoriteProductView.as_view(), name='like'),
     path('vote-comment/', views.VoteCommentView.as_view(), name='vote-comment'),
     path('comments/<slug:slug>/', views.ProductCommentsView.as_view(), name='comments'),
-    path('color-list/', views.ColorListViewSet.as_view({'get': 'list'}), name='color-list'),
+    path('color-list/', views.ColorListView.as_view(), name='color-list'),
+    path('size-list/', views.SizeListView.as_view(), name='size-list'),
 ]
