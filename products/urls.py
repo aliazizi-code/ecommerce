@@ -11,4 +11,5 @@ urlpatterns = [
     path('comments/<slug:slug>/', views.ProductCommentsView.as_view(), name='comments'),
     path('color-list/', views.ColorListView.as_view(), name='color-list'),
     path('size-list/', views.SizeListView.as_view(), name='size-list'),
+    path('create-comment/', views.CreateCommentView.as_view(), name='create-comment'),
 ]
