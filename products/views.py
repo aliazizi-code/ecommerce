@@ -4,7 +4,7 @@ from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-from django.shortcuts import get_list_or_404
+from django.shortcuts import get_object_or_404, get_list_or_404
 from django_ratelimit.decorators import ratelimit
 from django.utils.decorators import method_decorator
 from .filters import ProductFilter
@@ -15,7 +15,7 @@ from products.models import (
     FavoriteProduct,
     VoteComment,
     ColorProduct,
-    SizeProduct,
+    SizeProduct
 )
 from products.serializers import (
     ProductsListSerializer,
@@ -26,6 +26,7 @@ from products.serializers import (
     CommentsAndRepliesSerializer,
     ColorProductSerializer,
     SizeProductSerializer,
+    CreateCommentSerializer,
 )
 
 
@@ -60,9 +61,9 @@ class FavoriteProductView(APIView):
 
         if serializer.is_valid():
             data = serializer.validated_data
-            product = get_list_or_404(Product, slug=data['product_slug'], is_published=True, is_deleted=False)
+            product = get_object_or_404(Product, slug=data['product_slug'], is_published=True, is_deleted=False)
 
-            like, created = FavoriteProduct.objects.get_or_create(user=request.user, product_id=product[0].id)  
+            like, created = FavoriteProduct.objects.get_or_create(user=request.user, product_id=product.id)  
 
             action = 'added to favorite' if created else 'removed from favorite' 
             if not created:
@@ -101,9 +102,8 @@ class ProductCommentsView(generics.ListAPIView):
 
     def get_queryset(self):
         slug = self.kwargs['slug']
-        product = get_list_or_404(Product, slug=slug, is_published=True, is_deleted=False)
-        return product[0].comments.filter(is_approved=True, parent_comment__isnull=True).order_by('-created_at')
-
+        product = get_object_or_404(Product, slug=slug, is_published=True, is_deleted=False)
+        return product.comments.filter(is_approved=True, parent_comment__isnull=True).order_by('-created_at')
 
 
 class ColorListView(generics.ListAPIView):
@@ -114,4 +114,12 @@ class ColorListView(generics.ListAPIView):
 class SizeListView(generics.ListAPIView):
     queryset = SizeProduct.objects.all()
     serializer_class = SizeProductSerializer
+
+
+class CreateCommentView(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = CreateCommentSerializer
+
+    def perform_create(self, serializer):
+        serializer.save()
 
