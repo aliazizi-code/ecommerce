@@ -15,24 +15,24 @@ from products.models import (
     FavoriteProduct,
     VoteComment,
     ColorProduct,
-    SizeProduct
+    SizeProduct,
 )
 from products.serializers import (
-    ProductsListSerializer,
+    ProductListSerializer,
     ProductDetailSerializer,
-    CategorySerializer,
+    CategoryWithChildrenSerializer,
     FavoriteProductSerializer,
     VoteCommentSerializer,
-    CommentsAndRepliesListSerializer,
+    CommentWithRepliesSerializer,
     ColorProductSerializer,
     SizeProductSerializer,
-    CreateCommentOrReplySerializer,
+    CommentOrReplySerializer,
 )
 
 
 class ProductsListViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.filter(is_published=True, is_deleted=False)
-    serializer_class = ProductsListSerializer
+    serializer_class = ProductListSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_class = ProductFilter
 
@@ -47,7 +47,7 @@ class ProductDetailView(generics.ListAPIView):
 
 
 class CategoriesListView(generics.ListAPIView):
-    serializer_class = CategorySerializer
+    serializer_class = CategoryWithChildrenSerializer
     queryset = CategoryProduct.objects.filter(parent=None, is_active=True)
 
 
@@ -98,7 +98,7 @@ class VoteCommentView(APIView):
 
 
 class ProductCommentsListView(generics.ListAPIView):
-    serializer_class = CommentsAndRepliesListSerializer
+    serializer_class = CommentWithRepliesSerializer
 
     def get_queryset(self):
         slug = self.kwargs['slug']
@@ -118,7 +118,7 @@ class SizeListView(generics.ListAPIView):
 
 class CreateCommentView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
-    serializer_class = CreateCommentOrReplySerializer
+    serializer_class = CommentOrReplySerializer
 
     def perform_create(self, serializer):
         serializer.save()
