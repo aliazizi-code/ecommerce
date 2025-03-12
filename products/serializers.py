@@ -17,14 +17,14 @@ class ImagesProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ImagesProduct
-        fields = ('image', 'image_thumbnail')
+        fields = ('id', 'image', 'image_thumbnail')
         read_only_fields = ('image', 'image_thumbnail')
 
 # Serializers for Product Details
 class CategoryProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = CategoryProduct
-        fields = ('name', 'slug')
+        fields = ('id' ,'name', 'slug')
 
 class ColorProductSerializer(serializers.ModelSerializer):
     class Meta:
@@ -39,7 +39,7 @@ class SizeProductSerializer(serializers.ModelSerializer):
 class SpecificationsProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = SpecificationsProduct
-        fields = ('title', 'desc')
+        fields = ('id','title', 'desc')
 
 # Serializers for Comments
 class CommentsSerializer(serializers.ModelSerializer):
@@ -52,9 +52,9 @@ class CommentsSerializer(serializers.ModelSerializer):
                   'likes_count', 'dislikes_count', 'created_at']
 
 
-class CreateCommentSerializer(serializers.ModelSerializer):
+class CreateCommentOrReplySerializer(serializers.ModelSerializer):
     product_slug = serializers.SlugField(write_only=True)
-    parent_comment_id = serializers.IntegerField(required=False, )
+    parent_comment_id = serializers.IntegerField(required=False, allow_null=True)
     class Meta:
         model = CommentProduct
         fields = ['id', 'rating', 'comment', 'product_slug', 'parent_comment_id']
@@ -72,7 +72,7 @@ class CreateCommentSerializer(serializers.ModelSerializer):
         comment = CommentProduct.objects.create(product=product[0], parent_comment_id=parent_comment_id, **validated_data)
         return comment
 
-class CommentsAndRepliesSerializer(CommentsSerializer):
+class CommentsAndRepliesListSerializer(CommentsSerializer):
     replies = serializers.SerializerMethodField()
 
     class Meta:
@@ -93,7 +93,7 @@ class ProductsListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ('name', 'slug', 'price', 'image_thumbnail', 'favorites_count', 'avg_rating')
+        fields = ('id' ,'name', 'slug', 'price', 'image_thumbnail', 'favorites_count', 'avg_rating')
 
 # Serializer for Product Detail
 class ProductDetailSerializer(serializers.ModelSerializer):
@@ -107,7 +107,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = (
-            'name', 'slug', 'sku', 'price', 'image',
+            'id' ,'name', 'slug', 'sku', 'price', 'image',
             'short_desc', 'description', 'category',
             'color', 'size', 'avg_rating', 'favorites_count',
             'images', 'specifications', 'comments_count', 'comments'
