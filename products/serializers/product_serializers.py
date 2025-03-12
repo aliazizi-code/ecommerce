@@ -1,6 +1,6 @@
 from rest_framework import serializers
-from .images_serializers import ProductImageSerializer
-from .comments_serializers import CommentsSerializer
+from .image_serializers import ProductImageSerializer
+from .comment_serializers import CommentsSerializer
 from products.models import (
     Product,
     CategoryProduct,
