@@ -23,10 +23,10 @@ from products.serializers import (
     CategorySerializer,
     FavoriteProductSerializer,
     VoteCommentSerializer,
-    CommentsAndRepliesSerializer,
+    CommentsAndRepliesListSerializer,
     ColorProductSerializer,
     SizeProductSerializer,
-    CreateCommentSerializer,
+    CreateCommentOrReplySerializer,
 )
 
 
@@ -97,8 +97,8 @@ class VoteCommentView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ProductCommentsView(generics.ListAPIView):
-    serializer_class = CommentsAndRepliesSerializer
+class ProductCommentsListView(generics.ListAPIView):
+    serializer_class = CommentsAndRepliesListSerializer
 
     def get_queryset(self):
         slug = self.kwargs['slug']
@@ -118,7 +118,7 @@ class SizeListView(generics.ListAPIView):
 
 class CreateCommentView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
-    serializer_class = CreateCommentSerializer
+    serializer_class = CreateCommentOrReplySerializer
 
     def perform_create(self, serializer):
         serializer.save()
