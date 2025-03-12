@@ -41,9 +41,8 @@ class ProductDetailView(generics.ListAPIView):
     serializer_class = ProductDetailSerializer
 
     def get_queryset(self):
-        slug = self.kwargs['slug']
-        return get_list_or_404(Product, slug=slug, is_published=True, is_deleted=False)
-
+        product_id = self.kwargs['id']
+        return get_list_or_404(Product, id=product_id, is_published=True, is_deleted=False)
 
 
 class CategoriesListView(generics.ListAPIView):
@@ -61,7 +60,7 @@ class FavoriteProductView(APIView):
 
         if serializer.is_valid():
             data = serializer.validated_data
-            product = get_object_or_404(Product, slug=data['product_slug'], is_published=True, is_deleted=False)
+            product = get_object_or_404(Product, id=data['product_id'], is_published=True, is_deleted=False)
 
             like, created = FavoriteProduct.objects.get_or_create(user=request.user, product_id=product.id)  
 
@@ -101,8 +100,8 @@ class ProductCommentsListView(generics.ListAPIView):
     serializer_class = CommentWithRepliesSerializer
 
     def get_queryset(self):
-        slug = self.kwargs['slug']
-        product = get_object_or_404(Product, slug=slug, is_published=True, is_deleted=False)
+        product_id = self.kwargs['id']
+        product = get_object_or_404(Product, id=product_id, is_published=True, is_deleted=False)
         return product.comments.filter(is_approved=True, parent_comment__isnull=True).order_by('-created_at')
 
 
