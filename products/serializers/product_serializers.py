@@ -65,4 +65,9 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 
 
 class FavoriteProductSerializer(serializers.Serializer):
-    product_slug = serializers.SlugField()
+    product_id = serializers.IntegerField()
+
+    def validate_product_id(self, value):
+        if 1 > value :
+            raise serializers.ValidationError("Product ID must be greater than 0.")
+        return value
