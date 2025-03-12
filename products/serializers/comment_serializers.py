@@ -18,12 +18,12 @@ class CommentOrReplySerializer(serializers.ModelSerializer):
     parent_comment_id = serializers.IntegerField(required=False, allow_null=True)
     class Meta:
         model = CommentProduct
-        fields = ['id', 'rating', 'comment', 'product_slug', 'parent_comment_id']
+        fields = ['id', 'rating', 'comment', 'product_id', 'parent_comment_id']
     
     def create(self, validated_data):
-        product_slug = validated_data.pop('product_slug')
+        product_id = validated_data.pop('product_id')
         parent_comment_id = validated_data.pop('parent_comment_id', None)
-        product = get_list_or_404(Product, slug=product_slug, is_published=True, is_deleted=False)
+        product = get_list_or_404(Product, id=product_id, is_published=True, is_deleted=False)
 
         validated_data['user'] = self.context['request'].user
 
