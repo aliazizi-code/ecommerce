@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from django.shortcuts import get_list_or_404
+from django.shortcuts import get_list_or_404, get_object_or_404
 from .models import (
     Product,
     CategoryProduct,
@@ -54,27 +54,22 @@ class CommentsSerializer(serializers.ModelSerializer):
 
 class CreateCommentSerializer(serializers.ModelSerializer):
     product_slug = serializers.SlugField(write_only=True)
+    parent_comment_id = serializers.IntegerField(required=False, )
     class Meta:
         model = CommentProduct
-        fields = ['rating', 'comment', 'product_slug']
-
-    def validate_rating(self, value):
-        if not (1 <= value <= 5):
-            raise serializers.ValidationError("Rating must be between 1 and 5.")
-        return value
-
-    def validate_comment(self, value):
-        if not value.strip():
-            raise serializers.ValidationError("Comment must not be empty.")
-        return value
+        fields = ['id', 'rating', 'comment', 'product_slug', 'parent_comment_id']
     
     def create(self, validated_data):
         product_slug = validated_data.pop('product_slug')
+        parent_comment_id = validated_data.pop('parent_comment_id', None)
         product = get_list_or_404(Product, slug=product_slug, is_published=True, is_deleted=False)
 
         validated_data['user'] = self.context['request'].user
 
-        comment = CommentProduct.objects.create(product=product[0], parent_comment=None, **validated_data)
+        if parent_comment_id is not None:
+            parent_comment = get_object_or_404(CommentProduct, id=parent_comment_id)
+
+        comment = CommentProduct.objects.create(product=product[0], parent_comment_id=parent_comment_id, **validated_data)
         return comment
 
 class CommentsAndRepliesSerializer(CommentsSerializer):
