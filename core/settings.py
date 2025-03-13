@@ -170,5 +170,11 @@ REST_FRAMEWORK = {
     ),
 }
 
-
+# retelimit
 RATELIMIT_USE_CACHE = 'default'
+
+
+# CELERY
+CELERY_BROKER_URL = os.getenv('CACHE_LOCATION')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
