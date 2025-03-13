@@ -1,6 +1,8 @@
 from django.core.validators import RegexValidator
 from rest_framework import serializers
 
+from accounts.models import User
+
 
 class PhoneNumberField(serializers.CharField):
     default_validators = [
@@ -13,6 +15,14 @@ class PhoneNumberField(serializers.CharField):
 
 class RequestOTPSerializer(serializers.Serializer):
     number = PhoneNumberField(max_length=13)
+
+    def validate_number(self, value):
+        user = self.context['request'].user
+
+        if User.objects.filter(number=value).exists():
+            raise serializers.ValidationError("This phone number is already in use.")
+        
+        return value
 
 
 class VerifyOTPRequestSerializer(serializers.Serializer):
