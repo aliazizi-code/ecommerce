@@ -6,6 +6,7 @@ from rest_framework import permissions
 from accounts.serializers.password_serializers import *
 from accounts.otp import *
 from accounts.models import User
+from accounts.tasks import send_otp_to_email_tasks, send_otp_to_phone_tasks
 
 
 
@@ -24,7 +25,7 @@ class ForgotPasswordRequestView(APIView):
                 user = get_object_or_404(User, number=number)
                 if user.number == data['number']:
                     otp = generate_otp_pass(user.id)
-                    print(f'Your OTP is: {otp}')
+                    send_otp_to_phone_tasks.delay(otp)
 
                     return Response({"detail": "OTP sent successfully."}, status=status.HTTP_200_OK)
                 return Response({"detail": "New number must be different from the current number."}, status=status.HTTP_400_BAD_REQUEST)
@@ -33,8 +34,7 @@ class ForgotPasswordRequestView(APIView):
                 user = get_object_or_404(User, email=email)
                 if user.email != data['email']:
                     otp = generate_otp_pass(user.id)
-                    print(f'Your OTP is: {otp}')
-                    #todo : send email
+                    send_otp_to_email_tasks.delay(otp)
 
                     return Response({"detail": "OTP sent successfully."}, status=status.HTTP_200_OK)
                 return Response({"detail": "New email must be different from the current email."}, status=status.HTTP_400_BAD_REQUEST)
