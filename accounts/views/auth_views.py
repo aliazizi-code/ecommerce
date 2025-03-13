@@ -8,6 +8,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from accounts.models import User
 from accounts.serializers.auth_serializers import *
 from accounts.otp import *
+from accounts.tasks import send_otp_to_phone_tasks
 
 
 class GenerateOTPView(APIView):
@@ -36,7 +37,7 @@ class GenerateOTPView(APIView):
             delete_otp(user.id)
             otp = generate_otp(user.id)
 
-            print(f'Your OTP is: {otp}')
+            send_otp_to_phone_tasks.delay(otp)
 
             return Response(
                 data={'message': 'OTP sent successfully'},
