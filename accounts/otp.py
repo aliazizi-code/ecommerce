@@ -18,6 +18,8 @@ def _retrieve_secret(user_id, prefix='otp_secret'):
 
 def generate_otp(user_id, prefix='otp_secret'):
     """Generate a one-time password (OTP) and store its secret."""
+    delete_otp(user_id, prefix)
+
     secret = pyotp.random_base32()
     _store_secret(user_id, secret, prefix)
     
@@ -31,7 +33,11 @@ def verify_otp(user_id, otp, prefix='otp_secret'):
         return False
 
     totp = _get_totp(secret)
-    return totp.verify(otp)
+    if totp.verify(otp):
+        delete_otp(user_id, prefix)
+        return True
+
+    return False
 
 def delete_otp(user_id, prefix='otp_secret'):
     """Delete the stored OTP secret from the cache."""
@@ -67,3 +73,13 @@ def verify_otp_change_number(user_id, otp):
 
 def delete_otp_change_number(user_id):
     delete_otp(user_id, prefix='otp_secret_change_number')
+
+
+def generate_otp_change_email(user_id):
+    return generate_otp(user_id, prefix='otp_secret_change_email')
+
+def verify_otp_change_email(user_id, otp):
+    return verify_otp(user_id, otp, prefix='otp_secret_change_email')
+
+def delete_otp_change_email(user_id):
+    delete_otp(user_id, prefix='otp_secret_change_email')
