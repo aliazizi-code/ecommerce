@@ -8,7 +8,8 @@ from accounts.models import UserProfile, User
 from accounts.otp import *
 from accounts.serializers.user_update_serializers import *
 from accounts.serializers.auth_serializers import RequestOTPSerializer, VerifyOTPRequestSerializer
-
+from accounts.tasks import send_otp_to_phone_tasks, send_otp_to_email_tasks
+from utils import CacheManager
 
 
 class UpdateUserProfileView(APIView):
@@ -29,20 +30,39 @@ class UpdateUserProfileView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class SetEmailView(APIView):
+class ChangeEmailRequestView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-    serializer_class = SetEmailSerializer
+    serializer_class = ChangeEmailRequestSerializer
 
-    def patch(self, request):
+    def post(self, request):
         user=request.user
-        serializer = self.serializer_class(user, data=request.data, partial=True)
+        serializer = self.serializer_class(user, data=request.data)
 
         if serializer.is_valid():
-            serializer.save()
-            return Response(
-                {"message": "Email updated successfully.", "data": serializer.data},
-                status=status.HTTP_200_OK
-            )
+            data = serializer.validated_data
+
+            otp = generate_otp_change_email(user.id)
+            send_otp_to_email_tasks.delay(otp)
+            CacheManager.set_new_value(user.id, data['email'], 'new_email', OTP_TIMEOUT)
+
+            return Response({"message": "OTP sent to your email."}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ChangeEmailVerifyView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ChangeEmailVerifySerializer
+
+    def post(self, request):
+        user = request.user
+        serializer = self.serializer_class(data=request.data)
+        
+        if serializer.is_valid():
+            data = serializer.validate
+            User.objects.filter(id=user.id).update(email=data['email'])
+            CacheManager.delete_value(user.id, "new_email")
+            return Response({"message": "Email successfully updated."}, status=status.HTTP_200_OK)
+        
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -63,7 +83,9 @@ class ChangeNumberRequestView(APIView):
                     delete_otp_change_number(user.id)
                     cache.delete(f"new_number_{user.id}")
                     otp = generate_otp_change_number(user.id)
-                    print(f'Your OTP is: {otp}')
+
+                    send_otp_to_phone_tasks.delay(otp)
+
                     cache.set(f"new_number_{user.id}", new_number, timeout=OTP_TIMEOUT)
                     return Response({"detail": "OTP sent successfully."}, status=status.HTTP_200_OK)
                 return Response({"detail": "New number is same as old number."}, status=status.HTTP_400_BAD_REQUEST)
@@ -77,7 +99,7 @@ class ChangeNumberVerifyView(APIView):
     serializer_class = VerifyOTPRequestSerializer
 
     def post(self, request):
-        user=request.user
+        user = request.user
         serializer = self.serializer_class(data=request.data)
 
         if serializer.is_valid():
