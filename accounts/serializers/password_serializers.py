@@ -1,6 +1,9 @@
 from rest_framework import serializers
 from .auth_serializers import PhoneNumberField
 import re
+from accounts.models import User
+from django.shortcuts import get_object_or_404
+from accounts.otp import verify_otp_pass
 
 
 class PasswordField(serializers.CharField):
@@ -59,12 +62,55 @@ class BasePasswordSerializer(serializers.Serializer):
 
 
 class ForgotPasswordRequestSerializer(PhoneEmailBaseSerializer):
-    pass
+    def validate_number(self, value):
+        get_object_or_404(User, number=value)
+        return value
+    
+    def validate_email(self, value):
+        get_object_or_404(User, email=value)
+        return value
     
 
 class ForgotPasswordVerifySerializer(PhoneEmailBaseSerializer, BasePasswordSerializer):
     otp = serializers.IntegerField(required=True)
 
+    def validate_number(self, value):
+        get_object_or_404(User, number=value)
+        return value
+    
+    def validate_email(self, value):
+        get_object_or_404(User, email=value)
+        return value
+    
+    def validate_otp(self, value):
+        email = self.initial_data.get('email')
+        number = self.initial_data.get('number')
+        
+        if email:
+            user = get_object_or_404(User, email=email)
+        elif number:
+            user = get_object_or_404(User, number=number)
+        else:
+            raise serializers.ValidationError("Either email or number must be provided.")
+        
+        if not verify_otp_pass(user.id, value):
+            raise serializers.ValidationError("Invalid OTP provided. Please try again.")
+        return value
+
 
 class ChangePasswordSerializer(BasePasswordSerializer):
     old_password = serializers.CharField(write_only=True)
+
+    def validate_old_password(self, value):
+        user = self.context["request"].user
+
+        if not user.check_password(value):
+            raise serializers.ValidationError("Invalid password.")
+        return value
+    
+    def validate(self, attrs):
+        super().validate(attrs)
+
+        if attrs['password'] == attrs['old_password']:
+            raise serializers.ValidationError("")
+        return attrs
