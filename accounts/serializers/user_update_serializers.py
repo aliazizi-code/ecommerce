@@ -2,7 +2,8 @@ from rest_framework import serializers
 from accounts.models import UserProfile, User
 
 from utils import CacheManager
-from accounts.otp import verify_otp_change_email
+from accounts.otp import verify_otp_change_email, verify_otp_change_number
+from accounts.serializers import RequestOTPSerializer, VerifyOTPRequestSerializer
 
 
 class UpdateUserProfileSerializer(serializers.ModelSerializer):
@@ -38,7 +39,40 @@ class ChangeEmailVerifySerializer(serializers.Serializer):
         return value
 
     def validate_otp(self, value):
-        user_id = self.context['user_id']
+        user = self.context['request'].user
 
-        if not verify_otp_change_email(user_id, value):
+        if not verify_otp_change_email(user.id, value):
             raise serializers.ValidationError("Invalid OTP provided. Please try again.")
+        return value
+
+
+class ChangeNumberRequestSerializer(RequestOTPSerializer):
+    def validate_number(self, value):
+        super().validate_number(value)
+        user = self.context['request'].user
+
+        if user.number == value:
+            raise serializers.ValidationError("You must provide a different phone number.")
+        return value
+    
+        
+        
+class ChangeNumberVerifySerializer(VerifyOTPRequestSerializer):
+    def validate_number(self, value):
+        user = self.context['request'].user
+        cached_number = CacheManager.get_value(user.id, "new_number")
+
+        if cached_number is None:
+            raise serializers.ValidationError("No number found in the cache. Please request a new number verification.")
+        
+        if cached_number != value:
+            raise serializers.ValidationError("The provided number does not match the cached number.")
+        
+        return value
+    
+    def validate_otp(self, value):
+        user = self.context['request'].user
+
+        if not verify_otp_change_number(user.id, value):
+            raise serializers.ValidationError("Invalid OTP provided. Please try again.")
+        return value
