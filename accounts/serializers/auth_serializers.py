@@ -1,7 +1,9 @@
 from django.core.validators import RegexValidator
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
 from accounts.models import User
+from accounts.otp import verify_otp
 
 
 class PhoneNumberField(serializers.CharField):
@@ -17,11 +19,8 @@ class RequestOTPSerializer(serializers.Serializer):
     number = PhoneNumberField(max_length=13)
 
     def validate_number(self, value):
-        user = self.context['request'].user
-
         if User.objects.filter(number=value).exists():
             raise serializers.ValidationError("This phone number is already in use.")
-        
         return value
 
 
@@ -29,12 +28,44 @@ class VerifyOTPRequestSerializer(serializers.Serializer):
     number = PhoneNumberField(max_length=13)
     otp = serializers.IntegerField(required=True)
 
+    def validate_otp(self, value):
+        number = self.initial_data.get('number')
+        user = get_object_or_404(User, number=number)
 
-class EmailLoginSerializer(serializers.Serializer):
+        if not verify_otp(user.id, value):
+            raise serializers.ValidationError("Invalid OTP provided. Please try again.")
+        return value
+
+
+class BaseLoginSerializer(serializers.Serializer):
+    password = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        super().validate(attrs)
+        password = attrs['password']
+        user = self.get_user(attrs)
+
+        if not user.check_password(password):
+            raise serializers.ValidationError("Incorrect password.")
+        
+        attrs['user'] = user
+        return attrs
+
+    def get_user(self, attrs):
+        raise NotImplementedError("Subclasses must implement get_user method")
+
+
+class EmailLoginSerializer(BaseLoginSerializer):
     email = serializers.EmailField(required=True)
-    password = serializers.CharField(write_only=True)
+
+    def get_user(self, attrs):
+        email = attrs['email']
+        return get_object_or_404(User, email=email)
 
 
-class NumberLoginSerializer(serializers.Serializer):
+class NumberLoginSerializer(BaseLoginSerializer):
     number = PhoneNumberField(max_length=13)
-    password = serializers.CharField(write_only=True)
+
+    def get_user(self, attrs):
+        number = attrs['number']
+        return get_object_or_404(User, number=number)
