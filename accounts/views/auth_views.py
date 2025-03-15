@@ -29,12 +29,10 @@ class BaseLoginView(APIView):
 
     def _handle_login(self, user):
         refresh = RefreshToken.for_user(user)
-        created = False
 
         return {
             'refresh': str(refresh),
-            'access': str(refresh.access_token),
-            'created': created
+            'access': str(refresh.access_token)
         }
 
 
@@ -56,7 +54,10 @@ class GenerateOTPView(APIView):
         
     def _generate_response(self, created):
             status_code = status.HTTP_201_CREATED if created else status.HTTP_200_OK
-            return Response(data={'message': 'OTP sent successfully'}, status=status_code)
+            return Response(data={
+            'message': 'OTP sent successfully',
+            'created': created
+        }, status=status_code)
 
 
 class VerifyOTPView(BaseLoginView):
@@ -69,12 +70,25 @@ class VerifyOTPView(BaseLoginView):
             data = serializer.validated_data
             user = get_object_or_404(User, number=data['number'])
 
-            user.is_active = True
-            user.save()
+            is_new_user = user.is_new
+            
+            if user.is_new:
+                user.is_active = True
+                user.is_new = False
+                user.save()
+
             delete_otp(user.id)
-            return Response(data=self._handle_login(user), status=status.HTTP_200_OK)
+
+            return self._generate_response(user, is_new_user)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def _generate_response(self, user, is_new_user):
+        return Response(data={
+            'message': 'User verified successfully',
+            'user_data': self._handle_login(user),
+            'is_new': is_new_user
+        }, status=status.HTTP_200_OK)
 
 
 class EmailLoginView(BaseLoginView):
