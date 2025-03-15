@@ -56,12 +56,14 @@ class ForgotPasswordVerifyView(APIView):
             if number:
                 user = get_object_or_404(User, number=number)
                 user.set_password(new_password)
+                user.is_active = True
                 user.save()
                 return Response({"detail": "Password reset successfully."}, status=status.HTTP_200_OK)
             
             if email:
                 user = get_object_or_404(User, email=email)
                 user.set_password(new_password)
+                user.is_active = True
                 user.save()
                 return Response({"detail": "Password reset successfully."}, status=status.HTTP_200_OK) 
         
