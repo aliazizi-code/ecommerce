@@ -24,8 +24,8 @@ from products.serializers import (
     FavoriteProductSerializer,
     VoteCommentSerializer,
     CommentWithRepliesSerializer,
-    ColorProductSerializer,
-    SizeProductSerializer,
+    ColorSerializer,
+    SizeSerializer,
     CommentOrReplySerializer,
 )
 
@@ -107,12 +107,12 @@ class ProductCommentsListView(generics.ListAPIView):
 
 class ColorListView(generics.ListAPIView):
     queryset = ColorProduct.objects.all()
-    serializer_class = ColorProductSerializer
+    serializer_class = ColorSerializer
     
 
 class SizeListView(generics.ListAPIView):
     queryset = SizeProduct.objects.all()
-    serializer_class = SizeProductSerializer
+    serializer_class = SizeSerializer
 
 
 class CreateCommentView(generics.CreateAPIView):
