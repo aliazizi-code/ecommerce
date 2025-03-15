@@ -1,6 +1,6 @@
 from rest_framework import serializers
-from .image_serializers import ProductImageSerializer
-from .comment_serializers import CommentsSerializer
+from products.serializers.image_serializers import ProductImageSerializer
+from products.serializers.comment_serializers import CommentSerializer
 from products.models import (
     Product,
     CategoryProduct,
@@ -61,7 +61,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 
     def get_comments(self, obj):
         comments = obj.comments.filter(is_approved=True).order_by('-likes_count')[:3]
-        return CommentsSerializer(comments, many=True).data
+        return CommentSerializer(comments, many=True).data
 
 
 class FavoriteProductSerializer(serializers.Serializer):
