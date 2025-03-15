@@ -1,3 +1,3 @@
-from cache_manager import CacheManager
+from utils.cache_manager import CacheManager
 
-from validators import validate_image_dimensions, validate_image_size
+from utils.validators import validate_image_dimensions, validate_image_size
