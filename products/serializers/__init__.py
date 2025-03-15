@@ -1,17 +1,20 @@
-from .image_serializers import ProductImageSerializer
+from products.serializers.image_serializers import ProductImageSerializer
 
-from .product_serializers import (
+from products.serializers.product_serializers import (
     ProductListSerializer,
     ProductDetailSerializer,
     CategorySerializer,
     ColorSerializer,
     SizeSerializer,
     SpecificationSerializer,
-    FavoriteProductSerializer
+    FavoriteProductSerializer,
 )
 
-from .comment_serializers import (
+from products.serializers.categorie_serializers import CategoryWithChildrenSerializer
+
+from products.serializers.comment_serializers import (
     CommentSerializer,
     CommentOrReplySerializer,
-    CommentWithRepliesSerializer
+    CommentWithRepliesSerializer,
+    VoteCommentSerializer,
 )
