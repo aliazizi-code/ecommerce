@@ -28,7 +28,7 @@ class CommentOrReplySerializer(serializers.ModelSerializer):
         validated_data['user'] = self.context['request'].user
 
         if parent_comment_id is not None:
-            parent_comment = get_object_or_404(CommentProduct, id=parent_comment_id)
+            parent_comment_id = get_object_or_404(CommentProduct, id=parent_comment_id)
 
         comment = CommentProduct.objects.create(product=product[0], parent_comment_id=parent_comment_id, **validated_data)
         return comment
