@@ -50,7 +50,6 @@ class ChangeEmailRequestView(APIView):
 
         if serializer.is_valid():
             data = serializer.validated_data
-
             otp = generate_otp_change_email(user.id)
             send_otp_to_email_tasks.delay(otp)
             CacheManager.set_new_value(user.id, data['email'], 'new_email', OTP_TIMEOUT)
@@ -65,10 +64,10 @@ class ChangeEmailVerifyView(APIView):
 
     def post(self, request):
         user = request.user
-        serializer = self.serializer_class(data=request.data)
+        serializer = self.serializer_class(data=request.data, context={'request': request})
         
         if serializer.is_valid():
-            data = serializer.validate
+            data = serializer.validated_data
             user.email = data['email']
             user.save()
             delete_otp_change_email(user.id)
