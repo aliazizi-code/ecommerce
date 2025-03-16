@@ -12,8 +12,8 @@ urlpatterns = [
 
     # User profile management
     path('user/profile/', views.UpdateUserProfileView.as_view(), name='user-profile'),
-    path('user/email/change/request/', views.ChangeEmailRequestView.as_view(), name='set-email-request'),
-    path('user/email/change/verify/', views.ChangeEmailVerifyView.as_view(), name='set-email-verify'),
+    path('user/email/change/request/', views.ChangeEmailRequestView.as_view(), name='change-email-request'),
+    path('user/email/change/verify/', views.ChangeEmailVerifyView.as_view(), name='change-email-verify'),
     path('user/phone/change/request/', views.ChangeNumberRequestView.as_view(), name='change-number-request'),
     path('user/phone/change/verify/', views.ChangeNumberVerifyView.as_view(), name='change-number-verify'),
 
