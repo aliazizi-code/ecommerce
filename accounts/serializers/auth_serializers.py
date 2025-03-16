@@ -18,11 +18,6 @@ class PhoneNumberField(serializers.CharField):
 class RequestOTPSerializer(serializers.Serializer):
     number = PhoneNumberField(max_length=13)
 
-    def validate_number(self, value):
-        if User.objects.filter(number=value).exists():
-            raise serializers.ValidationError("This phone number is already in use.")
-        return value
-
 
 class VerifyOTPRequestSerializer(serializers.Serializer):
     number = PhoneNumberField(max_length=13)
