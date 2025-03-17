@@ -3,7 +3,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-from accounts.otp import delete_otp, generate_otp
+from accounts.otp import delete_otp_auth, generate_otp_auth
 from accounts.tasks import send_otp_to_phone_tasks
 from accounts.models import User
 from accounts.serializers import (
@@ -22,7 +22,7 @@ class BaseLoginView(APIView):
 
         if serializer.is_valid():
             user = serializer.validated_data['user']
-            delete_otp(user.id)
+            delete_otp_auth(user.id)
             return Response(data=self._handle_login(user), status=status.HTTP_200_OK)
             
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -46,7 +46,7 @@ class GenerateOTPView(APIView):
             data = serializer.validated_data
             user, created = User.objects.get_or_create(number=data['number'])
 
-            otp = generate_otp(user.id)
+            otp = generate_otp_auth(user.id)
             send_otp_to_phone_tasks.delay(otp)
 
             return self._generate_response(created)
@@ -77,7 +77,7 @@ class VerifyOTPView(BaseLoginView):
                 user.is_new = False
                 user.save()
 
-            delete_otp(user.id)
+            delete_otp_auth(user.id)
 
             return self._generate_response(user, is_new_user)
 
