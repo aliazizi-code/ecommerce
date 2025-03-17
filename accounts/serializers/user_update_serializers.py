@@ -28,14 +28,13 @@ class ChangeEmailVerifySerializer(serializers.Serializer):
 
     def validate_email(self, value):
         user = self.context['request'].user
-        cached_email = CacheManager.get_value(user.id, "new_email")
-        print(f"{cached_email}")
+        cached_email = CacheManager.get_value(user_id=user.id, key_name="new_email")
 
-        # if not cached_email:
-        #     raise serializers.ValidationError("No email found in the cache. Please request a new email verification.")
+        if cached_email is None:
+            raise serializers.ValidationError("No email found in the cache. Please request a new email verification.")
 
-        # if cached_email != value:
-        #     raise serializers.ValidationError("The provided email does not match the cached email.")
+        if cached_email != value:
+            raise serializers.ValidationError("The provided email does not match the cached email.")
         
         return value
 
