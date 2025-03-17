@@ -3,7 +3,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
 from accounts.models import User
-from accounts.otp import verify_otp
+from accounts.otp import verify_otp_auth
 
 
 class PhoneNumberField(serializers.CharField):
@@ -27,7 +27,7 @@ class VerifyOTPRequestSerializer(serializers.Serializer):
         number = self.initial_data.get('number')
         user = get_object_or_404(User, number=number)
 
-        if not verify_otp(user.id, value):
+        if not verify_otp_auth(user.id, value):
             raise serializers.ValidationError("Invalid OTP provided. Please try again.")
         return value
 
