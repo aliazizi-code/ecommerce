@@ -22,33 +22,43 @@ class ForgotPasswordRequestView(APIView):
 
         if serializer.is_valid():
             data = serializer.validated_data
-            number = data.get('number')
-            email = data.get('email')
+            return self._send_otp(data)
 
-            if number:
-                user = get_object_or_404(User, number=number)
-                otp = generate_otp_pass(user.id)
-                send_otp_to_phone_tasks.delay(otp)
-                CacheManager.set_new_value(user.id, 'number', 'type_forget_pass', OTP_TIMEOUT)
-                return self._generate_response(user, 'number')
-                
-            
-            if email:
-                user = get_object_or_404(User, email=email)
-                otp = generate_otp_pass(user.id)
-                send_otp_to_email_tasks.delay(otp)
-                CacheManager.set_new_value(user.id, 'email', 'type_forget_pass', OTP_TIMEOUT)
-                return self._generate_response(user, 'email')
-        
-        
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
+    def _send_otp(self, data):
+        number = data.get('number')
+        email = data.get('email')
+
+        if number:
+            return self._process_otp_for_user('number', number)
+
+        if email:
+            return self._process_otp_for_user('email', email)
+
+    def _process_otp_for_user(self, otp_type, identifier):
+        if otp_type == 'number':
+            user = get_object_or_404(User, number=identifier)
+        else:
+            user = get_object_or_404(User, email=identifier)
+
+        otp = generate_otp_pass(user.id)
+        if otp_type == 'number':
+            send_otp_to_phone_tasks.delay(otp)
+            CacheManager.set_new_value(user.id, 'number', 'type_forget_pass', OTP_TIMEOUT)
+        else:
+            send_otp_to_email_tasks.delay(otp)
+            CacheManager.set_new_value(user.id, 'email', 'type_forget_pass', OTP_TIMEOUT)
+
+        return self._generate_response(user, otp_type)
+
     def _generate_response(self, user, otp_type):
-            return Response(data={
-                "detail": "OTP sent successfully.",
-                "user_id": user.id,
-                "otp_type": otp_type
+        return Response(data={
+            "detail": "OTP sent successfully.",
+            "user_id": user.id,
+            "otp_type": otp_type
         }, status=status.HTTP_200_OK)
+
     
     
 
