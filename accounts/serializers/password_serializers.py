@@ -9,7 +9,7 @@ from accounts.otp import verify_otp_pass
 class PasswordField(serializers.CharField):
     default_validators = [
         RegexValidator(
-            regex=r'^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*()_+{}":;\']).{8,}$',
+            regex=r'^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#\$%\^&\*\(\)-_\+=\{\}:\;"<>,\.?\/]).{8,}$',
             message="Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one digit, and one special character."
         )
     ]
@@ -88,5 +88,5 @@ class ChangePasswordSerializer(BasePasswordSerializer):
         super().validate(attrs)
 
         if attrs['password'] == attrs['old_password']:
-            raise serializers.ValidationError("")
+            raise serializers.ValidationError("New password cannot be the same as old password.")
         return attrs
