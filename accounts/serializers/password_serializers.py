@@ -27,7 +27,7 @@ class PhoneEmailBaseSerializer(serializers.Serializer):
         number = attrs.get('number', None)
         email = attrs.get('email', None)
 
-        if not number and not email or number and email:
+        if not number and not email or (number and email):
             raise serializers.ValidationError("Please provide either a phone number or an email address.")
 
         return attrs
@@ -57,30 +57,20 @@ class ForgotPasswordRequestSerializer(PhoneEmailBaseSerializer):
         return value
     
 
-class ForgotPasswordVerifySerializer(PhoneEmailBaseSerializer, BasePasswordSerializer):
+class ForgotPasswordVerifySerializer(PhoneEmailBaseSerializer ,BasePasswordSerializer):
+    user_id = serializers.IntegerField()
     otp = serializers.IntegerField(required=True)
-
-    def validate_number(self, value):
-        get_object_or_404(User, number=value)
-        return value
-    
-    def validate_email(self, value):
-        get_object_or_404(User, email=value)
-        return value
-    
+ 
     def validate_otp(self, value):
-        email = self.initial_data.get('email')
-        number = self.initial_data.get('number')
-        
-        if email:
-            user = get_object_or_404(User, email=email)
-        elif number:
-            user = get_object_or_404(User, number=number)
-        else:
-            raise serializers.ValidationError("Either email or number must be provided.")
+        user_id = self.initial_data.get("user_id")
+        user =get_object_or_404(User, id=user_id)
+
+        if not value:
+            raise serializers.ValidationError("OTP expired or not found.")
         
         if not verify_otp_pass(user.id, value):
             raise serializers.ValidationError("Invalid OTP provided. Please try again.")
+        
         return value
 
 
