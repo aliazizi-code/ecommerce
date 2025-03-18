@@ -48,7 +48,6 @@ class ChangeEmailVerifySerializer(serializers.Serializer):
 
 class ChangeNumberRequestSerializer(RequestOTPSerializer):
     def validate_number(self, value):
-        super().validate_number(value)
         user = self.context['request'].user
 
         if User.objects.filter(number=value).exists():
