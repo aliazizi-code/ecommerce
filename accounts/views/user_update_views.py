@@ -83,7 +83,7 @@ class ChangeNumberRequestView(APIView):
 
     def post(self, request):
         user=request.user
-        serializer = self.serializer_class(data=request.data)
+        serializer = self.serializer_class(data=request.data, context={'request': request})
 
         if serializer.is_valid():
             data = serializer.validated_data
@@ -103,7 +103,7 @@ class ChangeNumberVerifyView(APIView):
 
     def post(self, request):
         user = request.user
-        serializer = self.serializer_class(data=request.data)
+        serializer = self.serializer_class(data=request.data, context={'request': request})
 
         if serializer.is_valid():
             data = serializer.validated_data
